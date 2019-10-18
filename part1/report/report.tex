@@ -1,0 +1,73 @@
+% XeLaTeX can use any Mac OS X font. See the setromanfont command below.
+% Input to XeLaTeX is full Unicode, so Unicode characters can be typed directly into the source.
+
+% The next lines tell TeXShop to typeset with xelatex, and to open and save the source with Unicode encoding.
+
+%!TEX TS-program = xelatex
+%!TEX encoding = UTF-8 Unicode
+
+\documentclass[12pt]{ctexart}
+\usepackage{geometry}                % See geometry.pdf to learn the layout options. There are lots.
+\geometry{a4paper}                   % ... or a4paper or a5paper or ... 
+%\geometry{landscape}                % Activate for for rotated page geometry
+%\usepackage[parfill]{parskip}    % Activate to begin paragraphs with an empty line rather than an indent
+\usepackage{graphicx}
+\usepackage{amssymb}
+\usepackage{tabularx}
+\usepackage{amsmath}
+\usepackage{mathrsfs}
+\usepackage{listings}
+\usepackage{color}
+\usepackage{hyperref}
+\usepackage{amsthm}
+\usepackage{chemfig}
+\usepackage{mhchem}
+
+% Will Robertson's fontspec.sty can be used to simplify font choices.
+% To experiment, open /Applications/Font Book to examine the fonts provided on Mac OS X,
+% and change "Hoefler Text" to any of these choices.
+
+\usepackage{fontspec,xltxtra,xunicode}
+
+\providecommand*{\unit}[1]{\ensuremath{\mathrm{\,#1}}}
+\newcommand{\di}{\ensuremath{\mathrm{\,d}}}
+
+% \setmonofont{Source Code Pro}
+
+\setCJKmainfont{Noto Serif CJK SC}
+
+\CTEXsetup[format={\large\bfseries}]{section}
+
+\title{IOI2020 国家集训队第一阶段作业第一部分解题报告}
+\author{李白天}
+% \date{}
+
+\begin{document}
+
+\maketitle
+
+\section{cf559E Gerald 与路径}
+
+\subsection{题目大意}
+
+有 $n$ 组有序数对 $(a_i, l_i)$，对于每个 $i$ 有两种选择，将数轴上的 $[a_i - l_i, a_i]$ 这条线段染色或者将 $[a_i, a_i + l_i]$ 这条线段染色。求最大化的最终被染色总线段长度。
+
+\subsection{数据范围}
+
+输入均为整数，$1\le n\le 100, 0\le a_i\le 10^8, 1\le l_i\le 10^8$，保证 $a_i$ 互不相同。
+
+\subsection{解题过程}
+
+本题官方给出的是一个 $\Theta(n^4)$ 的做法，但实际上本题可以在 $\Theta(n^2)$ 的时间内解决。
+
+考虑在第一步枚举最优解中被染色的最右端点来自哪个 $i$，由于我们已经枚举了最右端点，那么在 $(a_i, a_i + l_i)$ 区间内的 $a_j$ 都不必要选取向右延伸，因为在这种枚举方式下已经假设这段区间的右端不可改进，故要求它们均向左延伸。进一步地，如果在这段区间内的 $a_j - l_j$ 之最小值 $< a_i$，则说明区间的左端可以得到扩展，扩展后新的被包含的 $a_j$ 同理要被如此考虑，直至区间无法进一步扩展。
+
+于是在规划剩余的 $i$ 时，还需考虑到与之前原有线段可能有交。我们考虑动态规划。$f(x)$ 表示假设之前已经规划的部分左端点为 $x$，接下来规划所有 $a_i < x$ 的 $i$ 对应的方案，总线段与 $(-\infty, x]$ 的交长度的最大值。$f(+\infty)$ 即为答案。关键点只有所有的 $a_i, a_i\pm l_i$，因此总共只有 $\Theta(n)$ 种，可以将状态离散化。
+
+对于之前的扩展部分，我们首先可以预处理每个区间内 $a_i - l_i$ 的最小值，通过区间最小值递推出每个区间最终向左扩展出的区间。这一部分的时间复杂度为 $\Theta(n^2)$。
+
+动态规划总共有 $\Theta(n)$ 个状态，每个状态有 $\Theta(n)$ 种转移方式，通过上述预处理可以将转移结果 $\Theta(1)$ 算出。
+
+综上所述，本题可以在 $\Theta(n^2)$ 时间复杂度内解决。
+
+\end{document}
