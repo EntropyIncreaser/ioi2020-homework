@@ -137,7 +137,8 @@
   - 随便用埃氏筛过程做几遍容斥即可 $\Theta(x\log\log x)$。
 - [ ] cf585F
 - [ ] cf587D
-- [ ] cf587F
+- [x] cf587F
+  - 按 $k$ 串长度分块。长的 $k \rightarrow l, r$，短的 $l, r\rightarrow k$。
 - [ ] cf590E
 - [ ] cf594E
 - [ ] cf603E
