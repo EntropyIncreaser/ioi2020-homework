@@ -1,0 +1,178 @@
+% XeLaTeX can use any Mac OS X font. See the setromanfont command below.
+% Input to XeLaTeX is full Unicode, so Unicode characters can be typed directly into the source.
+
+% The next lines tell TeXShop to typeset with xelatex, and to open and save the source with Unicode encoding.
+
+%!TEX TS-program = xelatex
+%!TEX encoding = UTF-8 Unicode
+
+\documentclass[12pt]{ctexart}
+\usepackage{geometry}                % See geometry.pdf to learn the layout options. There are lots.
+\geometry{a4paper}                   % ... or a4paper or a5paper or ... 
+%\geometry{landscape}                % Activate for for rotated page geometry
+%\usepackage[parfill]{parskip}    % Activate to begin paragraphs with an empty line rather than an indent
+\usepackage{graphicx}
+\usepackage{amssymb}
+\usepackage{tabularx}
+\usepackage{amsmath}
+\usepackage{mathrsfs}
+\usepackage{listings}
+\usepackage{color}
+\usepackage{hyperref}
+\usepackage{amsthm}
+\usepackage{chemfig}
+\usepackage{mhchem}
+
+% Will Robertson's fontspec.sty can be used to simplify font choices.
+% To experiment, open /Applications/Font Book to examine the fonts provided on Mac OS X,
+% and change "Hoefler Text" to any of these choices.
+
+\usepackage{fontspec,xltxtra,xunicode}
+
+\providecommand*{\unit}[1]{\ensuremath{\mathrm{\,#1}}}
+\newcommand{\di}{\ensuremath{\mathrm{\,d}}}
+
+\newtheorem{Def}{\hspace{2em}定义}
+\newtheorem{Thm}{\hspace{2em}定理}
+\newtheorem{Lem}{\hspace{2em}引理}
+
+% \setmonofont{Source Code Pro}
+
+\setCJKmainfont{Noto Serif CJK SC}
+
+\CTEXsetup[format={\large\bfseries}]{section}
+
+\title{%
+IOI2020 国家集训队第一阶段作业第三部分算法交流\\
+\large 浅谈动理数据结构(Kinetic Data Structure)}
+
+\author{北京大学附属中学\quad 李白天}
+% \date{}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+动理数据结构（Kinetic Data Structure，简称 KDS）研究的是将以往一类问题，将输入的数据改为一个随时间变化的量时，新的高效维护方法。这类问题在物理引擎方面有一定的应用（例如维护平面中 $n$ 个自由运动的点所构成的凸包）。而作者总结了其中一部分数据结构并加以改良，从而能够应用于一部分 OI 问题中。
+\end{abstract}
+
+\section{动理序列最值问题}
+
+设有 $n$ 个函数 $f_i : \mathbb R \rightarrow \mathbb R$，对于 $t_1 < t_2 < \dots < t_m$ 中的每个 $t_k$，求
+
+$$
+\max_{j=1}^n f_j(t_k)
+$$
+
+接下来我们讨论中假设 $f$ 均为不超过 $s$ 次的多项式函数。
+
+对于 $s=1$，OI 中已经有非常简单的做法。
+
+设 $f_i(x) = k_i x + b_i$，这是经典的半平面交问题，可以在 $\Theta(n\log n)$ 时间内计算出询问 $t$ 时分段函数的分界点和各段的表达式（均是一个一次函数），而且段数最多为 $n$，因此可以在 $\Theta(n\log n + m)$ 时间内做出所有回答。
+
+我们首先需要引入如下结论：
+
+\begin{Def}[$(n, s)$ Davenport-Schinzel 序列]
+记一个长度为 $m$ 的序列 $\sigma_1, \sigma_2, \dots, \sigma_m$ 是一个 $(n, s)$ Davenport-Schinzel 序列（简记作 $DS(n, s)$ 序列），当且仅当 $\sigma_i$ 为 $1$ 至 $n$ 中的整数，且满足：
+\begin{itemize}
+\item $\sigma$ 中相邻两项值不同。
+\item 对于任意 $x\neq y$，任何 $x, y$ 交替构成的序列如果是 $\sigma$ 的子序列，则长度不超过 $s+1$。
+\end{itemize}
+\end{Def}
+
+由于 $s$ 次函数最多有 $s$ 个实根，对于一个最高 $s$ 次多项式函数列在定义域上最大值构成的分段函数，自然而然是一个 $DS(n,s)$ 序列。而接下来的一个定理尤为有效地刻画了包络线的段数：
+
+\begin{Thm}
+记 $\lambda_s(n)$ 为 $DS(n, s)$ 序列可能的最长长度，有
+
+$$
+\lambda_s(n) = \begin{cases}
+n, & s = 1 \\
+2n - 1, & s = 2\\
+2n\alpha(n) + O(n), & s = 3\\
+\Theta(n 2^{\alpha(n)}), & s = 4\\
+\Theta(n\alpha(n) 2^{\alpha(n)}), & s = 5\\
+n2^{\alpha(n)^t/t! + O(\alpha(n)^{t-1})}, & s\ge 6, t = \left\lfloor \dfrac {s-2}2\right \rfloor
+\end{cases}
+$$
+\end{Thm}
+
+其中 $\alpha(n)$ 是反 Ackermann 函数。由其增长速度我们可知，$\lambda_s(n)$ 对于任意常数 $s$ 都是近乎线性的（比 $n\log n, n\log\log n, \dots$ 都低阶）。
+
+我们可知 $n$ 个最高 $s$ 次函数组成的上包络线分段数不超过 $\lambda_s(n)$。
+
+考虑分治，每次将当前函数分成两部分进行处理，然后给得到的两组分段函数合并。复杂度即为
+
+$$
+T(n) = 2T \left(\frac n2\right) + \lambda_s (n)
+$$
+
+根据主定理，解得 $T(n) = \Theta(\lambda_s(n) \log n)$。用于回答的时间为 $\Theta(m)$。
+
+\subsection{Kinetic Tournament 树}
+
+我们考虑一颗线段树，每个叶子节点表示了一个函数，线段树的每个节点存储了当前时间下子树中叶子节点的函数在此时取到最大值的那个函数。在时间推进的过程中，我们需要不断修改某些节点的取值。维护这种信息的线段树我们称为 Kinetic Tournament 树。之后我们简称为 KTT。
+
+考虑线段树中每个节点被修改次数，这等价于子树内所有函数包络线的分段数，因此所有节点修改次数总和与分治同理为 $\Theta(\lambda_s(n)\log n)$。因此直接在线段树上进行维护，由于每次修改需要走到该叶子，本算法的复杂度为 $\Theta(\lambda_s(n)\log^2 n)$。这比直接分治要显得逊色，但是我们将要看到这一方法在更强问题上的潜力。
+
+\subsection{带修改动理序列最值问题}
+
+本问题的带修改版本即允许在某时间 $t$ 时在线将某个函数重新赋值。总共修改 $m$ 次，询问 $q$ 次。
+
+对于 $s = 1$，这是若干分段一次函数的最值问题，可以通过先对询问坐标离散化，使用李超树在 $\Theta((n + m)\log^2 q + q)$ 时间内计算。并且它不适合在线问题，因为需要预先知道询问的坐标。
+
+我们考虑通过 KTT 来对此进行维护。在将一个函数重新赋值的时候，考虑将线段树中对应节点修改，并且更新到根节点的一串节点。
+
+这样维护的复杂度是什么呢？我们考虑将维护过程进行如下等价转化：每个叶子节点假设被修改了 $k_i$ 次，我们将其转化为这个节点下面放置 $k_i + 1$ 个节点，第一个节点是初始函数，后面接着是剩下的 $k_i$ 个函数，它们都假设是在其存在时间上的分段函数。那么一个管辖区间为 $(l, r)$ 的节点子树里的上包络线分段数不会超过 $\lambda_{s + 2}(r - l + 1 + \sum_{i=l}^r k_i)$，因此同一层的包络线分段总和不会超过
+
+\begin{align*}
+\sum_{(l, r)}\lambda_{s + 2}\left(r - l + 1 + \sum_{i=l}^r k_i\right) & \le \lambda_{s + 2}\left(\sum_{(l, r)} \left(r - l + 1 + \sum_{i=l}^r k_i\right)\right) \\
+& = \lambda_{s + 2}(n + m)
+\end{align*}
+
+经过以上分析，可知对于在线修改的最值查询中，KTT 可以做到 $\Theta(\lambda_{s + 2}(n + m)\log^2 n + q)$ 的时间内完成计算。
+
+\section{线性情况的扩展}
+
+动理序列最值问题在线性情况下无疑是和 OI 密切联系的，因为这与斜率优化高度相关。由于线性函数的性质良好，我们可以在其上研究一些扩展问题，遗憾的是笔者暂时未能确认在更高阶情况下的类似问题维护是否有相近的复杂度。
+
+\subsection{包含两类区间修改的序列最值问题}
+
+对于数列 $k_i, b_i$，我们有如下两种修改操作：
+
+\begin{itemize}
+\item 给定 $l, r, x$，对于 $l\le i\le r$，使 $b_i \leftarrow k_ix + b_i$。
+\item 给定 $l, r, c, k', b'$，对于 $l\le i\le r$，使 $k_i \leftarrow ck_i + k', b_i \leftarrow cb_i + b'$。
+\end{itemize}
+
+以及进行询问一段区间上 $b_i$ 的最值。
+
+这一问题在一部分 OI 题中有所部分出现，而这些问题在之前基本都只给出了 $\Theta(n + (m + q)\sqrt n)$ 复杂度的基于分块的做法，而我们将看到通过 KTT，我们可以在 $O(n\log^2 n + m\log^3 n + q\log n)$ 时间内完成操作和询问，需增加限制：\textbf{第一种修改操作中保证} $\mathbf{x > 0}$ \textbf{且第二种修改操作中保证} $\mathbf{c > 0}$。
+
+具体的做法思路是简单的：考虑在线段树上记录惰性标记，表示操作 2 的累计变化效果以及操作 1 的 $x$ 的累计。我们注意到操作 1 本质上就是对 KTT 上的某个节点的子树开始进行“时间推进”的操作，而不是像原始的 KTT 上只从根节点进行。
+
+\subsubsection{复杂度分析}
+
+我们考虑通过势能来分析这一算法的复杂度。
+
+我们定义一个非叶子节点组成的集合 $\mathcal P$，对于一个非叶子节点 $v$，如果 $v$ 在当前保留的取值较大的孩子所对应的直线斜率是严格小于另一个孩子的，那么 $v\in \mathcal P$。
+
+我们定义势函数 $\Phi = \sum_{v\in \mathcal P} d(v)$，其中 $d(v)$ 是节点 $v$ 在线段树上的深度，根节点的深度为 1。
+
+我们考虑 1 操作的最坏情况，即每个节点更新操作是单次进行的，那么我们定义一次更新操作的代价为 1，一次更新操作的均摊代价是 $1 + \Delta\Phi$，其中对于被修改的节点 $v$，可以得知 $v$ 必然从在 $\mathcal P$ 中变为不在，而 $v$ 的父节点 $p$ 有可能从不在 $\mathcal P$ 中变成在 $\mathcal P$ 中。故
+
+\begin{align*}
+\widehat c &= 1 + \Delta \Phi\\
+&\le 1 - d(v) + d(p) \\
+&= 1 - d(v) + (d(v) - 1)\\
+&= 0
+\end{align*}
+
+我们这一定义使得原本无法确认进行次数的更新操作在均摊代价中不需要被考虑。接下来考虑操作 1 和操作 2，它们其实本质上是类似的。注意到当一个节点的惰性标记被修改或以其为子树的数被更新时，这一节点的父节点可能由不在 $\mathcal P$ 中变为在 $\mathcal P$ 中，这最多导致势能增加 $d(p) = \Theta(\log n)$。而一次操作会影响 $\Theta(\log n)$ 个节点，因此一次操作导致势能增加最多 $\Theta(\log^2 n)$。
+
+还有一点需要注意的是由于 $\sum \widehat c_i = \sum c_i + \Phi_t - \Phi_s$，因此我们给总共的代价加上 $\Phi_s - \Phi_t = \Theta(n\log n)$，这是因为最坏情况是最初所有节点均在 $\mathcal P$ 中。
+
+综上，操作过程中最多会引发 $\Theta(n\log n + m\log^2 n)$ 次更新操作，因此复杂度有上界 $O(n\log^2 n + m\log^3 n + q\log n)$。
+
+\end{document}
