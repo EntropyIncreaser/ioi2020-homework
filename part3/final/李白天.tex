@@ -1,64 +1,28 @@
-% XeLaTeX can use any Mac OS X font. See the setromanfont command below.
-% Input to XeLaTeX is full Unicode, so Unicode characters can be typed directly into the source.
+% !TEX encoding = UTF-8
+\documentclass{noithesis}
 
-% The next lines tell TeXShop to typeset with xelatex, and to open and save the source with Unicode encoding.
+\begin{document}
 
-%!TEX TS-program = xelatex
-%!TEX encoding = UTF-8 Unicode
-
-\documentclass[12pt]{ctexart}
-\usepackage{geometry}                % See geometry.pdf to learn the layout options. There are lots.
-\geometry{a4paper}                   % ... or a4paper or a5paper or ... 
-%\geometry{landscape}                % Activate for for rotated page geometry
-%\usepackage[parfill]{parskip}    % Activate to begin paragraphs with an empty line rather than an indent
-\usepackage{graphicx}
-\usepackage{amssymb}
-\usepackage{tabularx}
-\usepackage{amsmath}
-\usepackage{mathrsfs}
-\usepackage{listings}
-\usepackage{color}
-\usepackage{hyperref}
-\usepackage{amsthm}
-\usepackage{chemfig}
-\usepackage{mhchem}
-
-% Will Robertson's fontspec.sty can be used to simplify font choices.
-% To experiment, open /Applications/Font Book to examine the fonts provided on Mac OS X,
-% and change "Hoefler Text" to any of these choices.
-
-\usepackage{fontspec,xltxtra,xunicode}
-
-\providecommand*{\unit}[1]{\ensuremath{\mathrm{\,#1}}}
-\newcommand{\di}{\ensuremath{\mathrm{\,d}}}
+%% 论文开始
 
 \newtheorem{Def}{\hspace{2em}定义}
 \newtheorem{Thm}{\hspace{2em}定理}
 \newtheorem{Lem}{\hspace{2em}引理}
+\newtheorem{Pro}{\hspace{2em}例题}
 
-% \setmonofont{Source Code Pro}
-
-\setCJKmainfont{Noto Serif CJK SC}
-
-\CTEXsetup[format={\large\bfseries}]{section}
-
-\title{%
-IOI2020 国家集训队第一阶段作业第三部分算法交流\\
-\large 浅谈函数最值的动态维护}
-
-\author{北京大学附属中学\quad 李白天}
-% \date{}
-
-\begin{document}
+\title{浅谈函数最值的动态维护}
+\author{北京大学附属中学~~李白天}
 
 \maketitle
 
 \begin{abstract}
+
 通过引入关于多个函数上包络线结构的讨论，本文主要对 OI 中的一些著名问题作出了如下改进：
 \begin{itemize}
-\item 将一个序列区间增加公差为正的等差数列，区间查询最值。本问题原本广为人知的做法为 $\Theta(\sqrt n)$，而本文的做法目前有上界 $O(\log^3 n)$。
-\item 李超线段树可以在 $\Theta(\log^2n)$ 内在平面中添加一条线段，并 $\Theta(\log n)$ 查询某一 $x$ 位置上最大的 $y$ 值。而本文通过完全不同的方法在保留询问复杂度的情况下将添加一条线段的复杂度改进为均摊 $\Theta(\alpha(n)\log n)$，且该做法可在高次函数得到一般性的拓展。
+\item 将一个序列区间增加公差为正的等差数列，区间查询最值。本问题原本广为人知的做法为 $\Theta(\sqrt n)$，而本文的做法目前有上界 $O(\log^2 n)$。
+\item 李超线段树可以在 $\Theta(\log^2n)$ 内在平面中添加一条线段，并 $\Theta(\log n)$ 查询某一 $x$ 位置上最大的 $y$ 值。而本文通过完全不同的方法在保留询问复杂度的情况下将添加一条线段的复杂度改进为均摊 $\Theta(\alpha(n)\log n)$ 的理论复杂度，且该做法可在高次函数得到一般性的拓展。
 \end{itemize}
+
 \end{abstract}
 
 \section{概述}
@@ -84,7 +48,7 @@ $$
 接下来的一个定理尤为有效地刻画了 DS 序列：
 
 \begin{Thm}
-记 $\lambda_s(n)$ 为 $DS(n, s)$ 序列可能的最长长度，有\cite{ds}
+记 $\lambda_s(n)$ 为 $DS(n, s)$ 序列可能的最长长度，有\footnote{Seth Pettie, \emph{Sharp Bounds on Davenport-Schinzel Sequences of Every Order}, 2015}
 
 $$
 \lambda_s(n) = \begin{cases}
@@ -100,13 +64,34 @@ $$
 
 其中 $\alpha(n)$ 是反 Ackermann 函数。由其增长速度我们可知，$\lambda_s(n)$ 对于任意常数 $s$ 都是近乎线性的。
 
+接下来给出 $s$ 较小的两个情况的证明。
+
+\subsubsection{$s = 1$ 情况的证明}
+
+假设序列中存在相同元素 $\sigma_i = \sigma_j (i < j)$，则说明 $\sigma_{i+1} \neq \sigma_i$，而 $\sigma_i, \sigma_{i+1}, \sigma_j$ 构成了一个长为 $3$ 的交替子序列，矛盾。
+
+因此我们得到，序列中不存在重复元素，又因为 $\sigma$ 的元素均为 $1\sim n$ 的正整数，所以 $m\le n$，任何一个 $1\sim n$ 的排列均取到等号，因此 $\lambda_1(n) = n$。
+
+\subsubsection{$s = 2$ 情况的证明}
+
+我们考虑施第二数学归纳法证明。对于 $n=1$ 的情况，$\lambda_2(1) = 1$ 显然成立。
+
+考虑对于 $n>1$ ，此时对于 $<n$ 的 $n_0$ 均有 $\lambda_2(n_0) = 2n_0 - 1$，考虑一个 $DS(n, 2)$ 序列，不妨设 $\sigma_1 = 1$。
+
+\begin{itemize}
+\item 若 $1$ 仅出现了一次，则 $m\le 1 + \lambda_2(n - 1) = 2n - 2 \le 2n - 1$。
+\item 设 $1$ 出现的下一个位置为 $i$，则对于 $1 < j < i$ 的所有元素 $\sigma_j$，因为不存在长为 $4$ 的交替子序列，其在 $>i$ 的位置均不会再次出现。设 $2\sim i - 1$ 中总共出现了 $k$ 种元素，则说明 $2\sim i - 1$ 构成一个 $DS(k, 2)$ 序列，$\ge i$ 的部分构成一个 $DS(n - k, 2)$ 序列，因此 $m\le 1 + \lambda_2(k) + \lambda_2(n - k) = 1 + 2k-1 + 2(n-k) - 1 = 2n - 1$。
+\end{itemize}
+
+而 $m = 2n-1$ 容易在形如 $1, 2, \dots, n - 1, n, n - 1, \dots, 2, 1$ 的序列取到。综上所属，$\lambda_2(n) = 2n-1$ 归纳成立。
+
 \subsection{DS 序列与问题的联系}
 
 我们认为 $s$ 可以某种程度上衡量我们维护的一族函数的“复杂程度”。我们注意到，对于我们维护的一族函数，如果任何两个函数 $f, g$，$\max (f(x), g(x))$ 的分段数量不超过 $s + 1$，那么 $n$ 个该族函数的上包络线的分段情况便等价于某个 $DS(n, s)$ 序列，我们称这族函数是 $s$ 阶交替的。因此上包络线分段长度最长只有 $\lambda_s(n)$。
 
 其中最为常见的便是最高 $s$ 次多项式。由于两个 $s$ 次多项式的交点最多只有 $s$ 个，因此最值的分段数量不超过 $s+1$ 个。自然而然地，我们知道对于 $n$ 个最高 $s$ 次多项式，上包络线分段长度不超过 $\lambda_s(n)$。
 
-另一个值得注意的是在一段区间上定义的 $s$ 次多项式。我们不妨将分段函数定义为：在原本定义域外的部分，函数值都为 $-\infty$。这样可以得到任意两个分段 $s$ 次函数是 $s+2$ 阶交替的，因此 $n$ 个分段 $s$ 次函数的最值的上包络线长度不超过 $\lambda_{s+2}(n)$。
+另一个值得注意的是在一段区间上定义的 $s$ 次多项式。我们不妨将分段函数定义为：在原本定义域外的部分，函数值都为 $-\infty$。这样可以得到任意两个分段 $s$ 次函数是 $s+2$ 阶交替的，因此 $n$ 个分段 $s$ 次函数的最值的上包络线分段长度不超过 $\lambda_{s+2}(n)$。
 
 在之前 OI 研究的问题中，多为一次函数和分段一次函数，这两个问题分别有 $s=1$ 和 $s=3$。
 
@@ -167,6 +152,12 @@ $$
 
 \subsection{应用}
 
+\subsubsection{维护分段一次函数最值}
+
+当该数据结构用于维护分段一次函数的时候，我们带入 $s = 1$，可得维护的总复杂度为 $\Theta(\lambda_{1+2}(n)\log n) = \Theta(n\alpha(n)\log n)$。这在理论上优于以往李超线段树的 $\Theta(\log^2 n)$ 加入一条线段的复杂度。值得一提的是，存在使 $n$ 条线段的上包络线分段数为 $\Theta(n\alpha(n))$ 级别的构造。\footnote{Ady Wiernik, Micha Sharir, \emph{Planar realizations of nonlinear Davenport–Schinzel sequences by segments}, 1988}因此上述复杂度的分析是紧的。
+
+\subsubsection{动态规划问题}
+
 对于形如下式的动态规划问题：
 
 $$
@@ -188,6 +179,8 @@ f_i(j+1) + f_{i+1}(j) & \le f_i(j) + f_{i+1}(j + 1)\\
 \end{align*}
 
 这说明对于可以通过四边形不等式进行决策单调性优化的问题，对于 $i\le i_0$ 的函数族 $f$ 在 $j \ge i_0$ 的定义域上是 $s=1$ 阶交替的。
+
+因此我们可以看到，上述数据结构在优化动态规划时能很好的兼容一些以往常见的条件。虽然在决策单调性问题上复杂度并不能达到最优，但上述数据结构却能处理性质略为复杂的转移代价函数。
 
 \section{询问点单调递增}
 
@@ -211,10 +204,10 @@ $$
 
 我们考虑通过 KTT 来对此进行维护。在将一个函数重新赋值的时候，考虑将线段树中对应节点修改，并且更新到根节点的一串节点。
 
-这样维护的复杂度是什么呢？我们考虑将维护过程进行如下等价转化：每个叶子节点假设被修改了 $k_i$ 次，我们将其转化为这个节点下面放置 $k_i + 1$ 个节点，第一个节点是初始函数，后面接着是剩下的 $k_i$ 个函数，它们都假设是在其存在时间上的分段函数。那么一个管辖区间为 $(l, r)$ 的节点子树里的上包络线分段数不会超过 $\lambda_{s + 2}(r - l + 1 + \sum_{i=l}^r k_i)$，因此同一层的包络线分段总和不会超过
+这样维护的复杂度是什么呢？我们考虑将维护过程进行如下等价转化：每个叶子节点假设被修改了 $k_i$ 次，我们将其转化为这个节点下面放置 $k_i + 1$ 个节点，第一个节点是初始函数，后面接着是剩下的 $k_i$ 个函数，它们都假设是在其存在时间上的分段函数。那么一个管辖区间为 $[l, r]$ 的节点子树里的上包络线分段数不会超过 $\lambda_{s + 2}(r - l + 1 + \sum_{i=l}^r k_i)$，因此同一层的包络线分段总和不会超过
 
 \begin{align*}
-\sum_{(l, r)}\lambda_{s + 2}\left(r - l + 1 + \sum_{i=l}^r k_i\right) & \le \lambda_{s + 2}\left(\sum_{(l, r)} \left(r - l + 1 + \sum_{i=l}^r k_i\right)\right) \\
+\sum_{[l, r]}\lambda_{s + 2}\left(r - l + 1 + \sum_{i=l}^r k_i\right) & \le \lambda_{s + 2}\left(\sum_{[l, r]} \left(r - l + 1 + \sum_{i=l}^r k_i\right)\right) \\
 & = \lambda_{s + 2}(n + m)
 \end{align*}
 
@@ -237,9 +230,9 @@ $$
 
 以及进行询问一段区间上 $b_i$ 的最值。
 
-本问题的做法改进自\cite{dzhang}。
+本问题的做法改进自\footnote{Daniel Zhang, https://codeforces.com/blog/entry/68534?\#comment-530381, 2019}。
 
-这一问题在一部分 OI 题中有所部分出现，而这些问题在之前基本都只给出了 $\Theta(n + (m + q)\sqrt n)$ 复杂度的基于分块的做法，而我们将看到通过 KTT，我们可以在 $O(n\log^2 n + m\log^3 n + q\log n)$ 时间内完成操作和询问，需增加限制：\textbf{第一种修改操作中保证} $\mathbf{x > 0}$ \textbf{且第二种修改操作中保证} $\mathbf{c > 0}$。
+这一问题在一部分 OI 题中有所部分出现，而这些问题在之前基本都只给出了 $\Theta(n + (m + q)\sqrt n)$ 复杂度的基于分块的做法，而我们将看到通过 KTT，我们可以在 $O(n\log^2 n + m\log^3 n + q\log n)$ 时间内完成操作和询问，需增加限制：\textbf{第一种修改操作中保证} $\mathbf{x > 0}$，且为了叙述主要思想，在这里仅考虑 $c > 0$ 的情况。
 
 具体的做法思路是简单的：考虑在线段树上记录惰性标记，表示操作 2 的累计变化效果以及操作 1 的 $x$ 的累计。我们注意到操作 1 本质上就是对 KTT 上的某个节点的子树开始进行“$x$ 增大”的操作，而不是像原始的 KTT 上只从根节点进行。
 
@@ -266,13 +259,30 @@ $$
 
 综上，操作过程中最多会引发 $\Theta(n\log n + m\log^2 n)$ 次更新操作，因此复杂度有上界 $O(n\log^2 n + m\log^3 n + q\log n)$。
 
+\subsubsection{特殊情况}
+
+在诸如“区间增加公差为正的等差数列”中，我们提炼出一个隐含条件：序列的 $k$ 是单调递增的。因此引发的更新操作必然是一个节点所取到的 max 由在左子切换为在右子。
+
+此时我们定义势能 $\Phi$ 为“max 位于左子”的节点数。由于操作过程最多引发 $\Theta(n + m\log n)$ 次更新操作。我们有复杂度上界 $O(n\log n + m\log^2 n + q\log n)$。
+
 \subsection{例题}
 
-\subsubsection{Codeforces 573E Bear and Bowling}
+\begin{Pro} Bear and Bowling\footnote{Codeforces 573E，https://codeforces.com/problemset/problem/573/E}
+\end{Pro}
 
-本题存在一种解法，需要按照一个顺序在一个序列 $a_n$ 中每次拿走一个数，设该数左边已经被拿走的数有 $k_i - 1$ 个，右边已经被拿走的数的总和为 $s_i$，那么每次拿的数必须是 $k_i\cdot a_i + s_i$ 中最大的。\cite{xyx}
+这里仅讨论与本文相关的一种解法，在该解法中我们需要按照一个顺序在一个序列 $a_n$ 中每次拿走一个数，设该数左边已经被拿走的数有 $k_i - 1$ 个，右边已经被拿走的数的总和为 $s_i$，那么每次拿的数必须是 $k_i\cdot a_i + s_i$ 中最大的。\footnote{徐翊轩, \emph{IOI2020中国国家集训队第一阶段作业 试题准备}, 2019}
 
 如果我们使用上述的数据结构，那么只需最初令 $b_i = a_i$，每次拿走一个数后我们将 $b_i$ 加上 $-\infty$，给 $[1, i - 1]$ 这一段加上 $a_i$，给 $[i + 1, n]$ 这一段执行 $b_j \leftarrow b_j + a_j$ 即可。
+
+
+\begin{Pro} Innophone\footnote{ROI 2018，https://loj.ac/problem/2845}
+
+给若干个 $x_i, y_i$，选取 $a, b$ 最大化
+
+$$ \sum_{i=1}^n [a\le x_i]a + [a > x_i][b\le y_i]b $$
+\end{Pro}
+
+我们按照 $y$ 排序，扫描过程中在 KTT 上区间增加斜率，按照对应的 $y$ 值查询就可以了。
 
 \subsubsection{最大连续子段和}
 
@@ -287,18 +297,87 @@ rmax &= \max(rs.rmax, rs.sum+ls.rmax)\\
 totmax &= \max(ls.totmax, rs.totmax, ls.rmax + rs.lmax)
 \end{align*}
 
-我们考虑将现在维护的这 $4$ 个信息均表示为一个一次函数，那么每个节点维护的击败时的 $x$ 即上式中所有 $\max$ 所取函数发生变更时间的最小值。我们考虑赋予不同的变量以不同的势能，$lmax, rmax$ 的势能为 $d(v)^2$，$totmax$ 的势能为 $d(v)$。通过这种势能赋值我们可以消解子树更新操作的代价，而可以得到本算法的一个复杂度上界 $\Theta(n\log^3 n + m\log^4 n + q\log n)$，其中 $m$ 为修改次数，$q$ 为询问次数，这个复杂度虽然看起来并不实用，然而在 $n = m + q = 10^5$ 的情况下，实际上运行效率比原本的 $\Theta(\sqrt n)$ 复杂度的绝大多数实现都要优秀。
+我们考虑将现在维护的这 $4$ 个信息均表示为一个一次函数，那么每个节点维护的击败时的 $x$ 即上式中所有 $\max$ 所取函数发生变更时间的最小值。
+
+我们记一个包含 max 比较的变量的 rank 值 $r(v, para)$：
+
+\begin{itemize}
+\item 对于 $r(v, lmax)$ 或 $r(v, rmax)$：对于该变量的决定式 $f(x) = \max(a(x), b(x))$，rank 值表示当前 $a, b$ 中斜率大于 $f$ 的斜率的直线的数量乘以 $d(v)^2$。
+\item 对于 $r(v, totmax)$：对于该变量的决定式 $f(x) = \max(a(x), b(x), c(x))$，rank 值表示当前 $a, b, c$ 中斜率大于 $f$ 的斜率的直线的数量乘以 $d(v)$。
+\end{itemize}
+
+我们直接定义势能 $\Phi = \sum_v \sum_{para} r(v, para)$。
+
+\begin{itemize}
+\item 当发生一次 $lmax$ 或 $rmax$ 的击败，有：
+
+$$ \Delta \Phi \le 1 -d^2 + (d-1)^2 + d-1 = 1-d \le 0 $$
+
+\item 当发生一次 $totmax$ 的击败，有：
+  
+  $$ \Delta \Phi \le 1 -d + d-1 = 0 $$
+
+\end{itemize}
+
+可以得到本算法的一个复杂度上界 $\Theta(n\log^3 n + m\log^4 n + q\log n)$，其中 $m$ 为修改次数，$q$ 为询问次数。
+
+但类比之前对于斜率单调的特殊情况所进行的分析，我们考虑每个节点的 $lmax$ 和 $rmax$ 的决策发生变化的次数。注意到 $lmax$ 的决策点只会递增，而在一个节点发生斜率切换的必要条件是决策位置从 $[l, mid]$ 切换到了 $[mid+1, r]$。每个节点最多触发一次，故 $lmax, rmax$ 的总共额外复杂度是 $\Theta(n\log n)$。因此我们现在知道在这个问题上 KTT 维护 $lmax$ 和 $rmax$ 的总共 dfs 到的节点数是 $\Theta((n + q)\log n)$ 的。我们沿用 $totmax$ 的势能分析，复杂度是 $O((n+m)\log^3 n + q\log n)$。
+
+但这其实并没有说明之前的势能分析完全冗余，刚刚所作的 $\log^4 n$ 的分析可以认为是在考虑一个更加一般性的操作，即加法是令 $a_i \leftarrow a_i + k_i x$，而原问题中隐含了 $k_i=1$，即 $k_i > 0$。
+
+\subsubsection{henry\_y 的数列}
+
+\paragraph{题目大意} 给一个长为 $n$ 的数列 $A_i$，支持修改操作：
+
+给定 $l, r, a, b, c$，对于 $l\le i\le r$，使 $A_i \leftarrow A_i + ai^2 + bi + c$，保证 $a, b\ge 0$，以及询问一段区间上 $A_i$ 的最小值。\footnote{改自「hyOI2020」，https://loj.ac/problem/6727}
+
+\paragraph{解法} 这一问题中看似有二次项，但二次项中的 $i^2$ 是只与下标相关的，因此实际上更接近于维护若干个二元一次函数的最值。
+
+首先还是类似 KTT 的思想，考虑用线段树先维护当前最值，以及加了 $(ai^2 + bi)$ 到什么时候会使得子树的某个比较关系发生变更。由于 $a, b\ge 0$ 且 $i\ge 1$，所以最小值只可能从右子树切换到左子树。
+
+假设左子树的最值在 $A_i$ 处，右子树的最值在 $A_j$ 处，若 $A_i > A_j$，则有可能未来 $A_j$ 反超 $A_i$，这需要
+
+\begin{align*}
+A_i +ai^2 + bi &\le A_j + aj^2 + bj\\
+A_i - A_j &\le a(j^2-i^2) + b(j-i)\\
+\frac{A_i - A_j}{j-i} &\le  a(i+j) + b
+\end{align*}
+
+由此可知，当 $(a, b)$ 进入一个半平面时，子树的最值发生切换。反过来说，若在该半平面的补集中，则还未发生最值切换。因此若当前的 $(a, b)$ 修改不发生子树的切换，则需要该点落在子树的所有限制之内，即所有半平面的交集之内。由于半平面的直线斜率为 $i+j$，所以左子树中的所有斜率均小于右子树中的所有斜率，我们可以使用可持久化平衡树来维护半平面交，并且在平衡树上进行二分从而在 $\Theta(\log n)$ 的时间得到两个半平面交合并的结果。
+
+由于本问题具有与前文问题相似的单调性，我们可以设势能 $\Phi$ 为“min 位于右子”的节点数。由于操作过程最多引发 $\Theta(n + m\log n)$ 次更新操作，每次操作消耗 $\Theta(\log^2n)$ 复杂度用于更新信息。我们有复杂度上界 $O((n + m\log n)\log^2 n + q\log n)$。
 
 \section{总结}
 
-本文主要围绕 $DS(n,s)$ 序列本身长度的一个优秀上界，通过“减少维护的必要交点数”的方法进行设计，得到了一些复杂度比较优秀的方法用于维护函数的最值。
+本文主要围绕 $DS(n,s)$ 序列本身长度的一个优秀上界，通过“减少维护的必要交点数”的方法进行设计，得到了一些复杂度比较优秀的方法用于维护函数的最值。希望本文上述的一些思路可以对 OI 中维护最值有关的问题产生更多的启发。
 
-另外，笔者认为以往的“决策单调性”大多可以与交替阶数 $s=1$ 的函数建立联系，那么对于 $s>1$ 的函数，或许可以由此得到更加\textbf{广义}的决策单调性，希望本文上述的一些思路可以对 OI 中维护最值有关的问题产生更多的启发。
+\section*{致谢}
 
-\begin{thebibliography}{widest label}
-\bibitem{ds} Micha Sharir, Pankaj K. Agarwal, \emph{Davenport-Schinzel Sequences and their Geometric Applications}, 1995
-\bibitem{xyx} 徐翊轩, \emph{IOI2020中国国家集训队第一阶段作业 试题准备}, 2019
-\bibitem{dzhang} Daniel Zhang, \url{https://codeforces.com/blog/entry/68534?#comment-530381}, 2019
-\end{thebibliography}
+感谢中国计算机学会提供学习和交流的平台。
+
+感谢北大附中肖然老师的关心和指导。
+
+感谢家人、朋友对我的支持与鼓励。
+
+感谢戴江齐同学和刘承奥学长与我讨论以及给予的启发。
+
+感谢房励行同学为本文刊误。
+
+\section*{参考文献}
+\begin{enumerate}[\lbrack 1\rbrack]
+\item Micha Sharir, Pankaj K. Agarwal, \emph{Davenport-Schinzel Sequences and their Geometric Applications}, 1995
+\item Seth Pettie, \emph{Sharp Bounds on Davenport-Schinzel Sequences of Every Order}, 2015
+\item Ady Wiernik, Micha Sharir, \emph{Planar realizations of nonlinear Davenport–Schinzel sequences by segments}, 1988
+\item 徐翊轩, \emph{IOI2020中国国家集训队第一阶段作业 试题准备}, 2019
+\item Daniel Zhang, https://codeforces.com/blog/entry/68534?\#comment-530381, 2019
+\end{enumerate}
+
+%\begin{thebibliography}{}
+%\bibitem{ds} Micha Sharir, Pankaj K. Agarwal, \emph{Davenport-Schinzel Sequences and their Geometric Applications}, 1995
+%\bibitem{xyx} 徐翊轩, \emph{IOI2020中国国家集训队第一阶段作业 试题准备}, 2019
+%\bibitem{dzhang} Daniel Zhang, https://codeforces.com/blog/entry/68534?\#comment-530381, 2019
+%\end{thebibliography}
+
+%% 论文结束
 
 \end{document}
